@@ -50,6 +50,7 @@ static float get_ppm(float Rs)
 
 void MQ2_Init(void)
 {
+    HAL_ADCEx_Calibration_Start(&hadc1);
     HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, MQ2_ADC_BUFFER_SIZE);
     start_time  = HAL_GetTick();
     last_update = start_time;
