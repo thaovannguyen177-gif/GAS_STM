@@ -1,29 +1,32 @@
 /*
- * led.c - LED đơn ở PA0 (bản không dùng static)
+ * led.c - LED đơn ở PA0 - THƯ VIỆN SPL (stm32f10x)
  * Nối dây: PA0 -> 220R -> LED(+), LED(-) -> GND  (sáng khi PA0 mức cao)
+ * Cần có trong project: stm32f10x_rcc.c, stm32f10x_gpio.c
  */
-#include "stm32f1xx_hal.h"
+#include "stm32f10x.h"
 
 #define LED_PORT  GPIOA
-#define LED_PIN   GPIO_PIN_0
+#define LED_PIN   GPIO_Pin_0
 
-uint8_t led_state = 1;                     // biến toàn cục: 1 = bật, 0 = tắt
+static uint8_t led_state = 1;
 
 void LED_Set(uint8_t state)                // 1 = bật, 0 = tắt
 {
     led_state = state ? 1 : 0;
-    HAL_GPIO_WritePin(LED_PORT, LED_PIN, led_state ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    if (led_state) GPIO_SetBits(LED_PORT, LED_PIN);
+    else           GPIO_ResetBits(LED_PORT, LED_PIN);
 }
 
 void LED_Init(void)
 {
-    GPIO_InitTypeDef g = {0};
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    g.Pin   = LED_PIN;
-    g.Mode  = GPIO_MODE_OUTPUT_PP;
-    g.Pull  = GPIO_NOPULL;
-    g.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(LED_PORT, &g);
+    GPIO_InitTypeDef g;
+
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+    g.GPIO_Pin   = LED_PIN;
+    g.GPIO_Mode  = GPIO_Mode_Out_PP;
+    g.GPIO_Speed = GPIO_Speed_2MHz;
+    GPIO_Init(LED_PORT, &g);
+
     LED_Set(1);                            // mặc định bật
 }
 
