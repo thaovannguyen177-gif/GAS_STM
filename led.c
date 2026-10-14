@@ -1,7 +1,6 @@
 /*
  * led.c - LED đơn ở PA0 - THƯ VIỆN SPL (stm32f10x)
  * Nối dây: PA0 -> 220R -> LED(+), LED(-) -> GND  (sáng khi PA0 mức cao)
- * Cần có trong project: stm32f10x_rcc.c, stm32f10x_gpio.c
  */
 #include "stm32f10x.h"
 
