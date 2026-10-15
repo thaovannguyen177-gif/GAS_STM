@@ -1,7 +1,5 @@
 /*
- * main.c mẫu cho project SPL: gọi gas.c và led.c (không có file .h)
- * Vì không có .h nên main.c tự khai báo các hàm ở đầu file.
- * Nếu đã có main.c của cả nhóm, chỉ cần thêm phần khai báo + 3 chỗ gọi hàm.
+*Ghép những hàm dưới này vào trong main.c (main chính để chạy chương trình) để gọi các hàm ở trong gas.c và led.c. Vậy nó mới chạy được tới các hàm trong gas.c và led.c.
  */
 #include "stm32f10x.h"
 
