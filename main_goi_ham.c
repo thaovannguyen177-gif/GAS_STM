@@ -23,11 +23,5 @@ int main(void)
     while (1)
     {
         MQ2_Process();      // gọi liên tục, bên trong tự cập nhật mỗi 1 giây
-
-        /* Người làm UART dùng:
-         *   MQ2_GetPPM()  -> gửi trường "G:"
-         *   LED_Get()     -> gửi trường "L:"
-         *   LED_Set(1/0)  -> khi nhận lệnh "LED:1" / "LED:0"
-         */
     }
 }
