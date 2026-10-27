@@ -9,9 +9,9 @@
 
 static uint8_t led_state = 1;
 
-void LED_Set(uint8_t state)                // 1 = bật, 0 = tắt
+void LED_Set(uint8_t state)                // 1 = tắt, 0 = bật
 {
-    led_state = state ? 1 : 0;
+    led_state = state ? 0 : 1;
     if (led_state) GPIO_SetBits(LED_PORT, LED_PIN);
     else           GPIO_ResetBits(LED_PORT, LED_PIN);
 }
