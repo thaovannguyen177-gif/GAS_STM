@@ -1,13 +1,13 @@
 /*
  * led.c - LED đơn ở PA0 - THƯ VIỆN SPL (stm32f10x)
- * Nối dây: PA0 -> 220R -> LED(+), LED(-) -> GND  (sáng khi PA0 mức cao)
+ * Nối dây: PA0 -> 220R -> LED(+), LED(-) -> GND  (sáng khi PA0 mức thấp)
  */
 #include "stm32f10x.h"
 
 #define LED_PORT  GPIOA
 #define LED_PIN   GPIO_Pin_0
 
-static uint8_t led_state = 1;
+static uint8_t led_state = 0;
 
 void LED_Set(uint8_t state)                // 1 = tắt, 0 = bật
 {
@@ -26,7 +26,7 @@ void LED_Init(void)
     g.GPIO_Speed = GPIO_Speed_2MHz;
     GPIO_Init(LED_PORT, &g);
 
-    LED_Set(1);                            // mặc định bật
+    LED_Set(0);                            // mặc định bật
 }
 
 uint8_t LED_Get(void)                      // trạng thái hiện tại
