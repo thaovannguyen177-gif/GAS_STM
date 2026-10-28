@@ -1,0 +1,159 @@
+/*====================================================
+ * CAM BIEN KHI GAS MQ-2
+ * Chan AO -> mach chia ap -> PA7 / ADC1_IN7
+ * Cau hinh thanh ghi truc tiep, khong dung ngat
+ *====================================================*/
+#include "stm32f10x.h"
+#include "stdint.h"
+#include "math.h"
+/*================ KHAI BAO =================*/
+#define RL                10000.0f
+#define VCC               5.0f
+#define CLEAN_AIR_RATIO   9.83f
+static float R0 = 0;
+
+/*================ KHOI TAO ADC =================*/
+void MQ2_Init(void)
+{
+    /* Bat clock GPIOA va ADC1 */
+    RCC->APB2ENR |= 0x00000204;
+
+    /* ADC clock = PCLK2 / 6 */
+    RCC->CFGR &= ~0x0000C000;
+    RCC->CFGR |=  0x00008000;
+
+    /* PA7 về 00(mode)00(cnf)*/
+    GPIOA->CRL &= ~0xF0000000;
+
+    /* Cau hinh ADC1 */
+    ADC1->CR1 = 0x00000000;
+    ADC1->CR2 = 0x00000000;
+
+    /* Mot kenh chuyen doi, chon ADC1_IN7 */
+    ADC1->SQR1 = 0x00000000;
+    ADC1->SQR3 = 0x00000007;
+
+    /* Thoi gian lay mau kenh 7 = 71.5 chu ky */
+    ADC1->SMPR2 &= ~0x00E00000;
+    ADC1->SMPR2 |=  0x00A00000;
+
+    /* Bat ADC1 */
+    ADC1->CR2 |= 0x00000001;
+
+    /* Reset hieu chuan ADC */
+    ADC1->CR2 |= 0x00000008;
+    while (ADC1->CR2 & 0x00000008);
+
+    /* Bat dau hieu chuan ADC */
+    ADC1->CR2 |= 0x00000004;
+    while (ADC1->CR2 & 0x00000004);
+}
+
+/*================ DELAY SYSTICK =================*/
+
+void MQ2_DelayMs(uint32_t ms)
+{
+    SysTick->LOAD = SystemCoreClock / 1000 - 1;
+    SysTick->VAL  = 0;
+    SysTick->CTRL = 0x00000005;
+
+    while (ms--)
+    {
+        while ((SysTick->CTRL & 0x00010000) == 0);
+    }
+
+    SysTick->CTRL = 0x00000000;
+}
+
+/*================ DOC ADC MOT MAU =================*/
+
+uint16_t MQ2_ReadRaw(void)
+{
+    /* Xoa co EOC cu */
+    ADC1->SR &= ~0x00000002;
+
+    /* Bat dau chuyen doi bang phan mem */
+    ADC1->CR2 |= 0x00400000;
+
+    /* Cho chuyen doi hoan tat */
+    while ((ADC1->SR & 0x00000002) == 0);
+
+    /* Tra ve gia tri ADC 12 bit */
+    return (uint16_t)(ADC1->DR & 0x00000FFF);
+}
+
+/*================ DOC TRUNG BINH 10 MAU =================*/
+
+uint16_t MQ2_Read(void)
+{
+    uint32_t sum = 0;
+    uint8_t i;
+
+    for (i = 0; i < 10; i++)
+    {
+        sum += MQ2_ReadRaw();
+    }
+
+    return (uint16_t)(sum / 10);
+}
+
+/*================ TINH DIEN AP AO =================*/
+
+static float get_voltage(void)
+{
+    return MQ2_Read() * 3.3f / 4095.0f * 1.5f;
+}
+
+/* Dien ap AO tinh bang mV */
+
+uint16_t MQ2_ReadMilliVolt(void)
+{
+    return (uint16_t)(get_voltage() * 1000.0f);
+}
+
+/*================ TINH DIEN TRO Rs =================*/
+static float get_Rs(void)
+{
+    float v = get_voltage();
+    if (v <= 0.01f || v >= VCC)
+    {
+        return 0;
+    }
+    return RL * (VCC - v) / v;
+}
+
+/*================ HIEU CHUAN R0 =================*/
+void MQ2_Calibrate(void)
+{
+    float sum = 0;
+    uint8_t i;
+    for (i = 0; i < 10; i++)
+    {
+        sum += get_Rs();
+        MQ2_DelayMs(100);
+    }
+    R0 = (sum / 10.0f) / CLEAN_AIR_RATIO;
+}
+
+/*================ KIEM TRA HIEU CHUAN =================*/
+uint8_t MQ2_IsCalibrated(void)
+{
+    return (R0 > 0) ? 1 : 0;
+}
+
+/*================ DOC NONG DO KHI PPM =================*/
+uint16_t MQ2_ReadPPM(void)
+{
+    float rs = get_Rs();
+    float ppm;
+    if (R0 <= 0 || rs <= 0)
+    {
+        return 0;
+    }
+    ppm = 574.25f * powf(rs / R0, -2.222f);
+    if (ppm > 65535.0f)
+    {
+        ppm = 65535.0f;
+    }
+    return (uint16_t)ppm;
+}
