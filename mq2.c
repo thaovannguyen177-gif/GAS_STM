@@ -67,10 +67,10 @@ uint16_t MQ2_Read(void)                          // trung bình 10 mẫu
     return (uint16_t)(sum / 10);
 }
 
-/* Điện áp thật tại đầu AO (V), đã bù cầu chia áp 10k/20k (hệ số 1.5) */
+/* Điện áp thật tại đầu AO (V), đã bù cầu chia áp 10k/10k (hệ số 2) */
 static float get_voltage(void)
 {
-    return MQ2_Read() * 3.3f / 4095.0f * 1.5f;
+    return MQ2_Read() * 3.3f / 4095.0f * 2f;
 }
 uint16_t MQ2_ReadMilliVolt(void)
 {
